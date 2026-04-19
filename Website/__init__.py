@@ -11,7 +11,18 @@ DB_NAME = "database.db"
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'hjshjhdjah kjshkjdhjs'
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
+
+    # ✅ PostgreSQL (Render) + fallback to SQLite (local)
+    db_url = os.getenv("DATABASE_URL")
+
+    if db_url:
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql://", 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_NAME}"
+
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
 
     db.init_app(app)
@@ -37,8 +48,8 @@ def create_app():
 
     with app.app_context():
 
-        # ⚠️ Still not ideal, but kept because you already use it
-        db.create_all()
+        # ❌ REMOVE create_all (important for PostgreSQL)
+        # db.create_all()
 
         # 🔹 Seed groups ONCE if empty
         populate_groups_if_needed()
@@ -62,6 +73,10 @@ def create_app():
             state.credentials_generated = True
             db.session.commit()
 
-            send_credentials_email(generated)
+            # 🔹 Safe email sending
+            try:
+                send_credentials_email(generated)
+            except Exception as e:
+                print("Email failed:", e)
 
     return app
