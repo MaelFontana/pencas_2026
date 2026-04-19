@@ -12,7 +12,7 @@ def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'hjshjhdjah kjshkjdhjs'
 
-    # ✅ PostgreSQL (Render) + fallback to SQLite (local)
+    # ✅ PostgreSQL (Render) + fallback SQLite (local)
     db_url = os.getenv("DATABASE_URL")
 
     if db_url:
@@ -48,10 +48,10 @@ def create_app():
 
     with app.app_context():
 
-        # ❌ REMOVE create_all (important for PostgreSQL)
-        # db.create_all()
+        # ✅ IMPORTANT: create tables (needed for PostgreSQL)
+        db.create_all()
 
-        # 🔹 Seed groups ONCE if empty
+        # 🔹 Seed groups ONCE
         populate_groups_if_needed()
 
         state = SystemState.query.first()
@@ -73,7 +73,7 @@ def create_app():
             state.credentials_generated = True
             db.session.commit()
 
-            # 🔹 Safe email sending
+            # 🔹 Safe email sending (won’t crash app)
             try:
                 send_credentials_email(generated)
             except Exception as e:
