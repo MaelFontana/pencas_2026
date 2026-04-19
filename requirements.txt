@@ -46,3 +46,4 @@ urllib3==2.2.3
 websockets==15.0.1
 werkzeug==3.0.4
 zipp==3.12.1
+psycopg2-binary==2.9.9
