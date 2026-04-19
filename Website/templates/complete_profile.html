@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Completar perfil – Penca 2026</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='fifa.png') }}">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f0f4ff, #e6ecff);
+      font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 44px 40px 36px;
+      width: 100%;
+      max-width: 420px;
+      border-radius: 18px;
+      box-shadow: 0 16px 48px rgba(99,102,241,0.14);
+    }
+
+    .card-logo {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      margin: 0 0 28px;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #1f2937;
+    }
+
+    .field { margin-bottom: 18px; }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 9px;
+      border: 1.5px solid #e5e7eb;
+      font-size: 0.95rem;
+      color: #1f2937;
+      background: #f9fafb;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    select { appearance: none; cursor: pointer; }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    /* select arrow */
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: "▾";
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      pointer-events: none;
+      font-size: 0.85rem;
+    }
+
+    /* autocomplete */
+    .autocomplete { position: relative; }
+
+    .autocomplete-list {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      max-height: 180px;
+      overflow-y: auto;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.1);
+      z-index: 50;
+      display: none;
+    }
+
+    .autocomplete-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    .autocomplete-item:hover { background: #eff6ff; color: #1e40af; }
+
+    button[type="submit"] {
+      width: 100%;
+      margin-top: 10px;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: white;
+      font-size: 0.97rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: filter 0.15s, transform 0.1s;
+    }
+
+    button[type="submit"]:hover { filter: brightness(1.08); }
+    button[type="submit"]:active { transform: scale(0.98); }
+
+    .error {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: #b91c1c;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <div class="card-logo">👤</div>
+    <h1>Completá tu perfil</h1>
+
+    <form method="POST">
+      <div class="field">
+        <label for="name">Tu nombre</label>
+        <input type="text" id="name" name="name" placeholder="Nombre y apellido" required>
+      </div>
+
+      <div class="field">
+        <label for="level">Clase</label>
+        <div class="select-wrap">
+          <select id="level" name="level" required>
+            <option value="" disabled selected hidden>Seleccioná tu clase</option>
+            <option>CP</option>
+            <option>CE1</option>
+            <option>CE2</option>
+            <option>CM1</option>
+            <option>CM2</option>
+            <option>6ème</option>
+            <option>5ème</option>
+            <option>4ème</option>
+            <option>3ème</option>
+            <option>2nde</option>
+            <option>1ère</option>
+            <option>Terminale</option>
+            <option>Profesor</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="country">País que alentás</label>
+        <div class="autocomplete">
+          <input type="text" id="country" name="country" placeholder="Escribí un país…" autocomplete="off" required>
+          <div id="country-list" class="autocomplete-list"></div>
+        </div>
+      </div>
+
+      <button type="submit">Guardar y continuar →</button>
+    </form>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+  </div>
+
+  <script>
+    const countries = [
+      "México 🇲🇽","Sudáfrica 🇿🇦","Corea 🇰🇷","Canadá 🇨🇦","Catar 🇶🇦","Suiza 🇨🇭",
+      "Brasil 🇧🇷","Marruecos 🇲🇦","Haití 🇭🇹","Escocia 🏴󠁧󠁢󠁳󠁣󠁴󠁿","Estados Unidos 🇺🇸",
+      "Paraguay 🇵🇾","Australia 🇦🇺","Alemania 🇩🇪","Curazao 🇨🇼","Costa de Marfil 🇨🇮",
+      "Ecuador 🇪🇨","Países Bajos 🇳🇱","Japón 🇯🇵","Túnez 🇹🇳","Bélgica 🇧🇪",
+      "Egipto 🇪🇬","Irán 🇮🇷","Nueva Zelanda 🇳🇿","España 🇪🇸","Cabo Verde 🇨🇻",
+      "Arabia Saudí 🇸🇦","Uruguay 🇺🇾","Francia 🇫🇷","Senegal 🇸🇳","Noruega 🇳🇴",
+      "Argentina 🇦🇷","Argelia 🇩🇿","Austria 🇦🇹","Jordania 🇯🇴","Portugal 🇵🇹",
+      "Uzbekistán 🇺🇿","Colombia 🇨🇴","Inglaterra 🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croacia 🇭🇷",
+      "Ghana 🇬🇭","Panamá 🇵🇦"
+    ];
+
+    const input = document.getElementById("country");
+    const list  = document.getElementById("country-list");
+
+    input.addEventListener("input", () => {
+      const val = input.value.toLowerCase();
+      list.innerHTML = "";
+      if (!val) { list.style.display = "none"; return; }
+
+      const hits = countries.filter(c => c.toLowerCase().startsWith(val));
+      hits.forEach(c => {
+        const item = document.createElement("div");
+        item.className = "autocomplete-item";
+        item.textContent = c;
+        item.addEventListener("mousedown", () => {
+          input.value = c;
+          list.style.display = "none";
+        });
+        list.appendChild(item);
+      });
+      list.style.display = hits.length ? "block" : "none";
+    });
+
+    input.addEventListener("blur", () => {
+      setTimeout(() => {
+        if (!countries.includes(input.value)) input.value = "";
+        list.style.display = "none";
+      }, 150);
+    });
+  </script>
+</body>
+</html>

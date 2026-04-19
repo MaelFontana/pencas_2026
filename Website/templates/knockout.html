@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Fase Eliminatoria – Penca 2026</title>
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='fifa.png') }}">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(135deg, #f0f4ff, #e6ecff);
+    min-height: 100vh;
+    color: #1f2937;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page { 
+    padding: 36px 0 64px; 
+    width: 100%;
+  }
+
+  /* —— Header —— */
+  .page-header {
+    text-align: center;
+    margin-bottom: 28px;
+    padding: 0 20px;
+  }
+  .page-header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #1f2937;
+    margin: 0 0 6px;
+  }
+  .page-header p {
+    color: #6b7280;
+    font-size: 0.88rem;
+    margin: 0;
+  }
+
+  /* —— Bracket centering logic —— */
+  .bracket-scroll {
+    overflow-x: auto;
+    padding: 20px 0;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    justify-content: center; /* Centers the bracket on desktop */
+  }
+
+  .bracket {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: max-content;
+    padding: 0 40px;
+    margin: 0 auto;
+  }
+
+  /* —— Branch —— */
+  .branch {
+    display: flex;
+    align-items: center; /* Aligns rounds to the horizontal center line */
+  }
+
+  /* —— Round column —— */
+  .round-col {
+    display: flex;
+    flex-direction: column;
+    width: 158px;
+  }
+
+  .round-label {
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+    text-align: center;
+    padding-bottom: 10px;
+    white-space: nowrap;
+  }
+
+  .round-matches {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    height: 620px;
+    padding: 0 6px;
+    gap: 4px;
+  }
+
+  /* —— Match card —— */
+  .match-card {
+    background: white;
+    border-radius: 9px;
+    border: 1.5px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.07);
+    overflow: hidden;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .match-card:has(.team-btn:not([disabled]):hover) {
+    border-color: #bfdbfe;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.14);
+  }
+
+  /* —— Team button —— */
+  .team-btn {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font-family: inherit;
+    font-size: 0.79rem;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+    transition: background 0.1s, color 0.1s;
+  }
+
+  .team-btn:hover:not([disabled]):not(.winner):not(.eliminated) {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .team-btn[disabled] {
+    cursor: default;
+  }
+
+  .team-btn.empty {
+    color: #d1d5db;
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .team-btn.winner {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: white;
+  }
+
+  .team-btn.eliminated {
+    color: #d1d5db;
+    background: #fafafa;
+    text-decoration: line-through;
+  }
+
+  .match-divider {
+    height: 1px;
+    background: #f3f4f6;
+  }
+
+  /* —— Connector gaps —— */
+  .gap {
+    width: 10px;
+    flex-shrink: 0;
+  }
+
+  /* —— Final column —— */
+  .final-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    width: 190px;
+    flex-shrink: 0;
+  }
+
+  .final-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6366f1;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .final-card {
+    width: 100%;
+    background: white;
+    border-radius: 11px;
+    border: 2px solid #6366f1;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(99,102,241,0.18);
+  }
+
+  .final-card .team-btn {
+    font-size: 0.85rem;
+    padding: 11px 12px;
+  }
+
+  /* —— Champion banner —— */
+  .champion-wrap {
+    display: none;
+    justify-content: center;
+    margin-top: 28px;
+    padding: 0 20px;
+  }
+
+  .champion-wrap.visible { display: flex; }
+
+  .champion-card {
+    background: white;
+    border: 2px solid #fbbf24;
+    border-radius: 14px;
+    padding: 18px 36px;
+    text-align: center;
+    box-shadow: 0 8px 28px rgba(251,191,36,0.18);
+    animation: pop 0.25s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .champion-card .trophy { font-size: 1.8rem; margin-bottom: 4px; }
+  .champion-card .c-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #9ca3af;
+    margin-bottom: 4px;
+  }
+  .champion-card .c-name {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1f2937;
+  }
+
+  /* —— Submit —— */
+  .submit-wrap {
+    text-align: center;
+    margin-top: 32px;
+    padding: 0 20px;
+  }
+
+  .submit-btn {
+    padding: 13px 48px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    font-family: inherit;
+    font-size: 0.97rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.1s;
+  }
+
+  .submit-btn:hover:not([disabled]) { filter: brightness(1.08); }
+  .submit-btn:active:not([disabled]) { transform: scale(0.98); }
+
+  .submit-btn[disabled] {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+</style>
+</head>
+
+<body>
+<div class="page">
+  <div class="page-header">
+    <h1>Fase Eliminatoria</h1>
+    <p>Tocá el equipo que creés que gana cada partido</p>
+  </div>
+
+  <form id="knockout-form">
+    <div class="bracket-scroll">
+      <div class="bracket">
+
+        <div class="branch">
+          <div class="round-col">
+            <div class="round-label">Dieciseisavos</div>
+            <div class="round-matches" data-round="32A">
+              {% for m in bracket.round_of_32['A'] %}
+              <div class="match-card"
+                   data-match-id="32A-{{ loop.index0 }}"
+                   data-next="{{ loop.index0 // 2 }}"
+                   data-next-slot="{{ loop.index0 % 2 }}">
+                <button type="button" class="team-btn" data-team-id="{{ m.team1.id }}">{{ m.team1.name }}</button>
+                <div class="match-divider"></div>
+                <button type="button" class="team-btn" data-team-id="{{ m.team2.id }}">{{ m.team2.name }}</button>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="gap"></div>
+          <div class="round-col">
+            <div class="round-label">Octavos</div>
+            <div class="round-matches" data-round="16A">
+              {% for i in range(4) %}
+              <div class="match-card"
+                   data-match-id="16A-{{ i }}"
+                   data-next="{{ i // 2 }}"
+                   data-next-slot="{{ i % 2 }}">
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+                <div class="match-divider"></div>
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="gap"></div>
+          <div class="round-col">
+            <div class="round-label">Cuartos</div>
+            <div class="round-matches" data-round="8A">
+              {% for i in range(2) %}
+              <div class="match-card"
+                   data-match-id="8A-{{ i }}"
+                   data-next="{{ i // 2 }}"
+                   data-next-slot="{{ i % 2 }}">
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+                <div class="match-divider"></div>
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="gap"></div>
+          <div class="round-col">
+            <div class="round-label">Semifinal</div>
+            <div class="round-matches" data-round="4A">
+              <div class="match-card"
+                   data-match-id="4A-0"
+                   data-next="0"
+                   data-next-slot="0">
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+                <div class="match-divider"></div>
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+              </div>
+            </div>
+          </div>
+          <div class="gap"></div>
+        </div>
+
+        <div class="final-col">
+          <div class="final-label">⚽ Gran Final</div>
+          <div class="round-matches" data-round="final" style="height:auto;justify-content:center;">
+            <div class="match-card final-card"
+                 data-match-id="final-0"
+                 data-next="0"
+                 data-next-slot="0">
+              <button type="button" class="team-btn empty" disabled>por definir</button>
+              <div class="match-divider"></div>
+              <button type="button" class="team-btn empty" disabled>por definir</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="branch">
+          <div class="gap"></div>
+          <div class="round-col">
+            <div class="round-label">Semifinal</div>
+            <div class="round-matches" data-round="4B">
+              <div class="match-card"
+                   data-match-id="4B-0"
+                   data-next="0"
+                   data-next-slot="1">
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+                <div class="match-divider"></div>
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+              </div>
+            </div>
+          </div>
+          <div class="gap"></div>
+          <div class="round-col">
+            <div class="round-label">Cuartos</div>
+            <div class="round-matches" data-round="8B">
+              {% for i in range(2) %}
+              <div class="match-card"
+                   data-match-id="8B-{{ i }}"
+                   data-next="{{ i // 2 }}"
+                   data-next-slot="{{ i % 2 }}">
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+                <div class="match-divider"></div>
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="gap"></div>
+          <div class="round-col">
+            <div class="round-label">Octavos</div>
+            <div class="round-matches" data-round="16B">
+              {% for i in range(4) %}
+              <div class="match-card"
+                   data-match-id="16B-{{ i }}"
+                   data-next="{{ i // 2 }}"
+                   data-next-slot="{{ i % 2 }}">
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+                <div class="match-divider"></div>
+                <button type="button" class="team-btn empty" disabled>por definir</button>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="gap"></div>
+          <div class="round-col">
+            <div class="round-label">Dieciseisavos</div>
+            <div class="round-matches" data-round="32B">
+              {% for m in bracket.round_of_32['B'] %}
+              <div class="match-card"
+                   data-match-id="32B-{{ loop.index0 }}"
+                   data-next="{{ loop.index0 // 2 }}"
+                   data-next-slot="{{ loop.index0 % 2 }}">
+                <button type="button" class="team-btn" data-team-id="{{ m.team1.id }}">{{ m.team1.name }}</button>
+                <div class="match-divider"></div>
+                <button type="button" class="team-btn" data-team-id="{{ m.team2.id }}">{{ m.team2.name }}</button>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+      </div></div><div class="champion-wrap" id="champion-wrap">
+      <div class="champion-card">
+        <div class="trophy">🏆</div>
+        <div class="c-label">Tu campeón del mundo</div>
+        <div class="c-name" id="champion-name"></div>
+      </div>
+    </div>
+
+    <div class="submit-wrap">
+      <button type="submit" class="submit-btn" id="submit-btn" disabled>
+        Guardar predicción
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  const NEXT_ROUND = {
+    '32A':'16A', '16A':'8A', '8A':'4A', '4A':'final',
+    '32B':'16B', '16B':'8B', '8B':'4B', '4B':'final'
+  };
+
+  const matchState = {};
+
+  document.querySelectorAll('.match-card').forEach(card => {
+    const btns = card.querySelectorAll('.team-btn');
+    matchState[card.dataset.matchId] = {
+      team1: teamFromBtn(btns[0]),
+      team2: teamFromBtn(btns[1]),
+      winnerId: null
+    };
+  });
+
+  function teamFromBtn(btn) {
+    return btn.dataset.teamId
+      ? { id: btn.dataset.teamId, name: btn.textContent.trim() }
+      : null;
+  }
+
+  document.querySelector('.bracket').addEventListener('click', e => {
+    const btn = e.target.closest('.team-btn');
+    if (!btn || btn.disabled || btn.classList.contains('empty')) return;
+    const card = btn.closest('.match-card');
+    const btns = [...card.querySelectorAll('.team-btn')];
+    const other = btns.find(b => b !== btn);
+    if (!other.dataset.teamId) return;
+    handlePick(card, btn, other);
+  });
+
+  function handlePick(card, pickedBtn, otherBtn) {
+    const id = card.dataset.matchId;
+    const round = card.closest('[data-round]').dataset.round;
+    const st = matchState[id];
+    const newWinnerId = pickedBtn.dataset.teamId;
+    const prevWinnerId = st.winnerId;
+    const changed = prevWinnerId && prevWinnerId !== newWinnerId;
+
+    st.winnerId = newWinnerId;
+
+    pickedBtn.classList.add('winner');
+    pickedBtn.classList.remove('eliminated');
+    otherBtn.classList.add('eliminated');
+    otherBtn.classList.remove('winner');
+
+    const nextRound = NEXT_ROUND[round];
+    if (nextRound) {
+      const nextIdx  = parseInt(card.dataset.next);
+      const nextSlot = parseInt(card.dataset.nextSlot);
+      if (changed) clearSlot(nextRound, nextIdx, nextSlot);
+      setSlot(nextRound, nextIdx, nextSlot, { id: newWinnerId, name: pickedBtn.textContent.trim() });
+    }
+
+    refreshChampion();
+    refreshSubmit();
+  }
+
+  function setSlot(roundKey, matchIdx, slotIdx, team) {
+    const card = getCard(roundKey, matchIdx);
+    if (!card) return;
+    const btns = [...card.querySelectorAll('.team-btn')];
+    const btn  = btns[slotIdx];
+    const id   = card.dataset.matchId;
+    const st   = matchState[id];
+
+    const oldId    = btn.dataset.teamId;
+    const wasWinner = oldId && oldId === st.winnerId;
+
+    btn.textContent = team.name;
+    btn.dataset.teamId = team.id;
+    btn.classList.remove('empty', 'eliminated');
+    btn.disabled = false;
+
+    if (slotIdx === 0) st.team1 = team; else st.team2 = team;
+
+    if (wasWinner && oldId !== team.id) {
+      st.winnerId = null;
+      btns.forEach(b => b.classList.remove('winner', 'eliminated'));
+      const next = NEXT_ROUND[roundKey];
+      if (next) clearSlot(next, parseInt(card.dataset.next), parseInt(card.dataset.nextSlot));
+    } else if (st.winnerId === team.id) {
+      btn.classList.add('winner');
+    }
+  }
+
+  function clearSlot(roundKey, matchIdx, slotIdx) {
+    const card = getCard(roundKey, matchIdx);
+    if (!card) return;
+    const btns = [...card.querySelectorAll('.team-btn')];
+    const btn  = btns[slotIdx];
+    const id   = card.dataset.matchId;
+    const st   = matchState[id];
+
+    const clearedId = btn.dataset.teamId;
+    const wasWinner = clearedId && clearedId === st.winnerId;
+
+    btn.textContent = 'por definir';
+    delete btn.dataset.teamId;
+    btn.classList.add('empty');
+    btn.classList.remove('winner', 'eliminated');
+    btn.disabled = true;
+
+    if (slotIdx === 0) st.team1 = null; else st.team2 = null;
+
+    if (wasWinner) {
+      st.winnerId = null;
+      btns.forEach(b => b.classList.remove('winner', 'eliminated'));
+      const next = NEXT_ROUND[roundKey];
+      if (next) clearSlot(next, parseInt(card.dataset.next), parseInt(card.dataset.nextSlot));
+    }
+  }
+
+  function getCard(roundKey, matchIdx) {
+    const round = document.querySelector(`[data-round="${roundKey}"]`);
+    if (!round) return null;
+    return [...round.querySelectorAll('.match-card')][matchIdx] || null;
+  }
+
+  function refreshChampion() {
+    const finalCard = document.querySelector('[data-round="final"] .match-card');
+    const st = matchState[finalCard.dataset.matchId];
+    const wrap = document.getElementById('champion-wrap');
+    if (st.winnerId) {
+      const winBtn = [...finalCard.querySelectorAll('.team-btn')].find(b => b.dataset.teamId === st.winnerId);
+      document.getElementById('champion-name').textContent = winBtn?.textContent.trim() ?? '';
+      wrap.classList.add('visible');
+    } else {
+      wrap.classList.remove('visible');
+    }
+  }
+
+  function refreshSubmit() {
+    const finalCard = document.querySelector('[data-round="final"] .match-card');
+    document.getElementById('submit-btn').disabled = !matchState[finalCard.dataset.matchId].winnerId;
+  }
+
+  function collectPredictions() {
+    const data = { R32:[], R16:[], QF:[], SF:[], WINNER:null, RUNNER_UP:null };
+    const roundMap = {
+      '32A':'R32','32B':'R32',
+      '16A':'R16','16B':'R16',
+      '8A':'QF','8B':'QF',
+      '4A':'SF','4B':'SF'
+    };
+
+    for (const [rk, dk] of Object.entries(roundMap)) {
+      document.querySelectorAll(`[data-round="${rk}"] .match-card`).forEach(card => {
+        const st = matchState[card.dataset.matchId];
+        if (!st.winnerId) return;
+        const loserId = st.team1?.id === st.winnerId ? st.team2?.id : st.team1?.id;
+        if (loserId) data[dk].push(parseInt(loserId));
+      });
+    }
+
+    const finalCard = document.querySelector('[data-round="final"] .match-card');
+    const fst = matchState[finalCard.dataset.matchId];
+    data.WINNER    = parseInt(fst.winnerId);
+    data.RUNNER_UP = parseInt(fst.team1?.id === fst.winnerId ? fst.team2?.id : fst.team1?.id);
+    return data;
+  }
+
+  document.getElementById('knockout-form').addEventListener('submit', e => {
+    e.preventDefault();
+    fetch('/submit-knockout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(collectPredictions())
+    }).then(r => r.json()).then(() => {
+      window.location.href = '/predict-statistics';
+    });
+  });
+</script>
+</body>
+</html>

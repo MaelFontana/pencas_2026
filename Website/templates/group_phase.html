@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(135deg, #f0f4ff, #e6ecff);
+    min-height: 100vh;
+  }
+
+  .page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+  }
+
+  /* ── Header ── */
+  .page-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .page-header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #1f2937;
+    margin: 0 0 6px;
+  }
+
+  .page-header p {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  /* ── Progress bar ── */
+  .progress-wrap {
+    margin-bottom: 28px;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 8px;
+  }
+
+  .progress-bar-bg {
+    background: #e5e7eb;
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #6366f1);
+    border-radius: 99px;
+    transition: width 0.35s ease;
+  }
+
+  /* ── Group card ── */
+  .group-step {
+    display: none;
+  }
+
+  .group-step.active {
+    display: block;
+  }
+
+  .group-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
+    overflow: hidden;
+  }
+
+  .group-card-header {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .group-badge {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid rgba(255,255,255,0.35);
+  }
+
+  .group-card-header h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+  }
+
+  .group-card-body {
+    padding: 8px 24px 20px;
+  }
+
+  /* ── Match row ── */
+  .match-row {
+    display: grid;
+    grid-template-columns: 1fr 52px 18px 52px 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .match-row:last-child {
+    border-bottom: none;
+  }
+
+  .team-left {
+    text-align: right;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: #1f2937;
+    line-height: 1.3;
+  }
+
+  .team-right {
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: #1f2937;
+    line-height: 1.3;
+  }
+
+  .score-input {
+    width: 100%;
+    padding: 6px 4px;
+    text-align: center;
+    border-radius: 8px;
+    border: 1.5px solid #e5e7eb;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+    background: #f9fafb;
+    transition: border-color 0.15s, background 0.15s;
+    -moz-appearance: textfield;
+  }
+
+  .score-input::-webkit-inner-spin-button,
+  .score-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+
+  .score-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+
+  .vs-sep {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #9ca3af;
+    user-select: none;
+  }
+
+  /* ── Navigation ── */
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+    gap: 12px;
+  }
+
+  .btn {
+    padding: 11px 28px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-back {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  .btn-back:hover { background: #e5e7eb; }
+
+  .btn-next {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: white;
+    margin-left: auto;
+  }
+
+  .btn-next:hover { filter: brightness(1.08); }
+
+  .btn-submit {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 13px 36px;
+    font-size: 1rem;
+    margin-left: auto;
+  }
+
+  .btn-submit:hover { filter: brightness(1.08); }
+
+  .btn-hidden { visibility: hidden; }
+
+  /* ── Dot indicators ── */
+  .dot-row {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 20px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d1d5db;
+    transition: background 0.25s, transform 0.25s;
+  }
+
+  .dot.done { background: #6366f1; }
+  .dot.current { background: #3b82f6; transform: scale(1.4); }
+</style>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Fase de Grupos</h1>
+    <p>Mundial 2026 — completá los marcadores de cada grupo</p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span id="progress-label">Grupo 1 de {{ groups|length }}</span>
+      <span id="progress-pct">0%</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <form method="POST" id="group-form">
+    {% for group in groups %}
+      <div class="group-step{% if loop.first %} active{% endif %}" id="step-{{ loop.index0 }}">
+        <div class="group-card">
+          <div class="group-card-header">
+            <span class="group-badge">Grupo</span>
+            <h2>{{ group.name }}</h2>
+          </div>
+          <div class="group-card-body">
+            {% for match in group.matches %}
+              <div class="match-row">
+                <div class="team-left">{{ match.team1.name }}</div>
+                <input class="score-input" type="number" name="m{{ match.id }}_1" min="0" max="99" required>
+                <div class="vs-sep">–</div>
+                <input class="score-input" type="number" name="m{{ match.id }}_2" min="0" max="99" required>
+                <div class="team-right">{{ match.team2.name }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    <div class="nav-row" id="nav-row">
+      <button type="button" class="btn btn-back btn-hidden" id="btn-back" onclick="navigate(-1)">← Anterior</button>
+      <button type="button" class="btn btn-next" id="btn-next" onclick="navigate(1)">Siguiente →</button>
+    </div>
+  </form>
+
+  <div class="dot-row" id="dot-row">
+    {% for group in groups %}
+      <div class="dot{% if loop.first %} current{% endif %}" id="dot-{{ loop.index0 }}"></div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  const TOTAL = {{ groups|length }};
+  let current = 0;
+
+  function updateUI() {
+    // Steps
+    document.querySelectorAll(".group-step").forEach((s, i) => {
+      s.classList.toggle("active", i === current);
+    });
+
+    // Progress
+    const pct = Math.round((current / TOTAL) * 100);
+    document.getElementById("progress-fill").style.width = pct + "%";
+    document.getElementById("progress-label").textContent = `Grupo ${current + 1} de ${TOTAL}`;
+    document.getElementById("progress-pct").textContent = pct + "%";
+
+    // Dots
+    document.querySelectorAll(".dot").forEach((d, i) => {
+      d.className = "dot" + (i < current ? " done" : i === current ? " current" : "");
+    });
+
+    // Back button
+    const back = document.getElementById("btn-back");
+    back.classList.toggle("btn-hidden", current === 0);
+
+    // Next / Submit
+    const next = document.getElementById("btn-next");
+    const navRow = document.getElementById("nav-row");
+
+    // Remove old submit if present
+    const oldSubmit = document.getElementById("btn-submit");
+    if (oldSubmit) oldSubmit.remove();
+
+    if (current === TOTAL - 1) {
+      next.style.display = "none";
+      const submitBtn = document.createElement("button");
+      submitBtn.type = "submit";
+      submitBtn.id = "btn-submit";
+      submitBtn.className = "btn btn-submit";
+      submitBtn.textContent = "Guardar pronósticos ✓";
+      navRow.appendChild(submitBtn);
+    } else {
+      next.style.display = "";
+    }
+  }
+
+  function currentStepValid() {
+    const step = document.getElementById("step-" + current);
+    const inputs = step.querySelectorAll("input[type='number']");
+    for (const inp of inputs) {
+      if (inp.value === "" || inp.value === null) return false;
+    }
+    return true;
+  }
+
+  function navigate(dir) {
+    if (dir === 1 && !currentStepValid()) {
+      const step = document.getElementById("step-" + current);
+      step.querySelectorAll("input[type='number']").forEach(inp => {
+        if (inp.value === "") inp.style.borderColor = "#ef4444";
+      });
+      return;
+    }
+    current = Math.max(0, Math.min(TOTAL - 1, current + dir));
+    updateUI();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // Clear red borders on input
+  document.getElementById("group-form").addEventListener("input", e => {
+    if (e.target.matches("input[type='number']")) {
+      e.target.style.borderColor = "";
+    }
+  });
+
+  updateUI();
+</script>
+
+{% endblock %}

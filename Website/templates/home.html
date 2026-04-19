@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ranking – Penca Mundial 2026</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='fifa.png') }}">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f4ff, #e6ecff);
+            font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+        }
+
+        /* ── Top bar ── */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e5e7eb;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .topbar-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+            letter-spacing: -0.01em;
+        }
+
+        .topbar-title span {
+            color: #3b82f6;
+        }
+
+        .logout-btn {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: none;
+            padding: 7px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .logout-btn:hover { background: #fecaca; }
+
+        /* ── Page ── */
+        .page {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 36px 20px 60px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .page-header h1 {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: #1f2937;
+            margin: 0 0 6px;
+        }
+
+        .page-header p {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* ── Card ── */
+        .leaderboard-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(99,102,241,0.1);
+            overflow: hidden;
+        }
+
+        /* ── Table ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead tr {
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            padding: 14px 20px;
+            text-align: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #9ca3af;
+        }
+
+        th:nth-child(2) { text-align: left; }
+
+        td {
+            padding: 14px 20px;
+            text-align: center;
+            color: #374151;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        td:nth-child(2) { text-align: left; }
+
+        tbody tr:last-child td { border-bottom: none; }
+
+        tbody tr:hover { background: #fafbff; }
+
+        /* ── Rank column ── */
+        .rank {
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: #9ca3af;
+            width: 48px;
+        }
+
+        .rank-1 { color: #f59e0b; }
+        .rank-2 { color: #94a3b8; }
+        .rank-3 { color: #b45309; }
+
+        /* ── Points badge ── */
+        .points-badge {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #1f2937;
+            padding: 4px 14px;
+            border-radius: 99px;
+            font-weight: 700;
+            font-size: 0.88rem;
+        }
+
+        /* ── Current user row ── */
+        .current-user {
+            background: #eff6ff !important;
+        }
+
+        .current-user td {
+            color: #1e40af;
+            font-weight: 600;
+        }
+
+        .current-user .points-badge {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .current-user .rank {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <span class="topbar-title">Penca <span>Mundial 2026</span></span>
+        <form action="{{ url_for('views.logout') }}" method="post">
+            <button type="submit" class="logout-btn">Cerrar sesión</button>
+        </form>
+    </div>
+
+    <div class="page">
+        <div class="page-header">
+            <h1>🏆 Ranking Actual</h1>
+            <p>Clasificación general de todos los participantes</p>
+        </div>
+
+        <div class="leaderboard-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nombre</th>
+                        <th>Clase</th>
+                        <th>País</th>
+                        <th>Puntos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in leaderboard %}
+                    <tr class="{% if user.name == current_user.name %}current-user{% endif %}">
+                        <td class="rank rank-{{ loop.index }}">{{ loop.index }}</td>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.school_level }}</td>
+                        <td>{{ user.favorite_team }}</td>
+                        <td><span class="points-badge">{{ user.points }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>

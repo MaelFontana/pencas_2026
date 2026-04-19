@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Predicciones individuales</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='fifa.png') }}">
+
+  <style>
+    /* Base Styles */
+    body {
+      margin: 0;
+      padding: 20px; /* Padding for mobile breathing room */
+      font-family: "Inter", "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #f2f5ff, #e6ecff);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: white;
+      padding: 40px;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 480px; /* Slightly wider to accommodate longer names */
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+      margin: 20px auto;
+    }
+
+    h1 {
+      margin-top: 0;
+      text-align: center;
+      font-size: 1.8rem;
+      color: #1f2937;
+    }
+
+    h3 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+      color: #1f2937;
+      border-bottom: 2px solid #eff6ff;
+      padding-bottom: 5px;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.9rem;
+    }
+
+    input {
+      width: 93%; /* Matches your previous logic */
+      padding: 12px;
+      margin-top: 6px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    button {
+      margin-top: 35px;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background-color: #2563eb;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #1e40af;
+    }
+
+    /* Autocomplete Logic */
+    .autocomplete {
+      position: relative;
+    }
+
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      margin-top: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+      z-index: 1000;
+      display: none;
+    }
+
+    .autocomplete-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    .autocomplete-item:hover {
+      background-color: #eff6ff;
+    }
+  </style>
+</head>
+
+<body>
+<div class="card">
+  <h1>Premios del Mundial</h1>
+
+  <form method="POST">
+
+    <h3>Mejores jugadores</h3>
+    {% for field, label in [
+      ('best_player','Mejor jugador'),
+      ('second_best_player','Segundo mejor jugador'),
+      ('third_best_player','Tercer mejor jugador')
+    ] %}
+    <label>{{ label }}</label>
+    <div class="autocomplete">
+      <input type="text" name="{{ field }}" class="player-input" placeholder="Buscar jugador..." autocomplete="off" required>
+      <div class="autocomplete-list"></div>
+    </div>
+    {% endfor %}
+
+    <h3>Otros premios</h3>
+
+    {% for field, label in [
+      ('best_young_player','Mejor jugador joven'),
+      ('best_goalkeeper','Mejor arquero'),
+      ('top_scorer','Máximo goleador'),
+      ('top_assister','Máximo asistidor')
+    ] %}
+    <label>{{ label }}</label>
+    <div class="autocomplete">
+      <input type="text" name="{{ field }}" class="player-input" placeholder="Buscar jugador..." autocomplete="off" required>
+      <div class="autocomplete-list"></div>
+    </div>
+    {% endfor %}
+
+    <button type="submit">Guardar predicción</button>
+  </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Logic remains the same as provided
+  const players = {{ players|tojson }};
+
+  document.querySelectorAll(".player-input").forEach(input => {
+    const list = input.nextElementSibling;
+
+    input.addEventListener("input", () => {
+      const value = input.value.toLowerCase();
+      list.innerHTML = "";
+
+      if (!value) {
+        list.style.display = "none";
+        return;
+      }
+
+      const matches = players.filter(p =>
+        p.toLowerCase().startsWith(value)
+      );
+
+      matches.forEach(player => {
+        const item = document.createElement("div");
+        item.className = "autocomplete-item";
+        item.textContent = player;
+        item.onclick = () => {
+          input.value = player;
+          list.style.display = "none";
+        };
+        list.appendChild(item);
+      });
+
+      list.style.display = matches.length ? "block" : "none";
+    });
+
+    input.addEventListener("blur", () => {
+      setTimeout(() => {
+        if (input.value && !players.includes(input.value)) {
+          input.value = "";
+        }
+        list.style.display = "none";
+      }, 150);
+    });
+  });
+});
+</script>
+
+</body>
+</html>

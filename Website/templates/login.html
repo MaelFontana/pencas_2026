@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ingreso – Penca Mundial 2026</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='fifa.png') }}">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f4ff, #e6ecff);
+            font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 44px 40px 36px;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 18px;
+            box-shadow: 0 16px 48px rgba(99,102,241,0.14);
+        }
+
+        .card-logo {
+            text-align: center;
+            margin-bottom: 6px;
+            font-size: 2.2rem;
+        }
+
+        h1 {
+            margin: 0 0 28px;
+            text-align: center;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.4;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .field { margin-bottom: 16px; }
+
+        input {
+            width: 100%;
+            padding: 11px 14px;
+            border-radius: 9px;
+            border: 1.5px solid #e5e7eb;
+            font-size: 0.95rem;
+            color: #1f2937;
+            background: #f9fafb;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            margin-top: 8px;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: white;
+            font-size: 0.97rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: filter 0.15s, transform 0.1s;
+        }
+
+        button[type="submit"]:hover { filter: brightness(1.08); }
+        button[type="submit"]:active { transform: scale(0.98); }
+
+        .help-link {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 0.82rem;
+            color: #9ca3af;
+        }
+
+        .help-link a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .help-link a:hover { text-decoration: underline; }
+
+        .messages {
+            margin-top: 16px;
+            padding: 10px 14px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            list-style: none;
+            text-align: center;
+            color: #b91c1c;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-logo">⚽</div>
+        <h1>¡Armá tu penca para el Mundial 2026!</h1>
+
+        <form method="POST">
+            <div class="field">
+                <label for="public_id">ID de acceso</label>
+                <input type="text" id="public_id" name="public_id" placeholder="WC26-XXXXXX" required autocomplete="username">
+            </div>
+            <div class="field">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <button type="submit">Ingresar</button>
+        </form>
+
+        <div class="help-link">
+            <a href="mailto:mael.fontana.allain@gmail.com">¿No tenés ID? Contactanos</a>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="messages">
+              {% for msg in messages %}<li>{{ msg }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+    </div>
+</body>
+</html>
